@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presensi Siswa PKL</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: #333;
+      min-height: 100vh;
+      box-sizing: border-box;
+      /* Latar belakang hangat bertema semangat PKL & industri dengan ilustrasi vektor SVG ringan */
+      background-color: #fdf6ec;
+      background-image:
+        linear-gradient(135deg, rgba(255, 243, 224, 0.88) 0%, rgba(255, 224, 178, 0.82) 50%, rgba(232, 240, 254, 0.88) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke='%23e65100' stroke-width='2' stroke-opacity='0.14'%3E%3Ccircle cx='80' cy='80' r='28'/%3E%3Ccircle cx='80' cy='80' r='12'/%3E%3Cpath d='M80 44v10M80 106v10M44 80h10M106 80h10M55 55l7 7M98 98l7 7M105 55l-7 7M62 98l-7 7'/%3E%3Cpath d='M240 130v-35l30 18v-18l30 18v-33h25v50z'/%3E%3Crect x='252' y='112' width='10' height='10'/%3E%3Crect x='272' y='112' width='10' height='10'/%3E%3Crect x='292' y='112' width='10' height='10'/%3E%3Cpath d='M60 310h90v45H60zM90 310v-12h30v12M60 328h90'/%3E%3Ccircle cx='300' cy='300' r='36'/%3E%3Ccircle cx='300' cy='300' r='16'/%3E%3Cpath d='M300 254v12M300 334v12M254 300h12M334 300h12M268 268l9 9M323 323l9 9M332 268l-9 9M277 323l-9 9'/%3E%3Cpath d='M165 210l20-35 20 35h-12v25h-16v-25z'/%3E%3C/g%3E%3C/svg%3E");
+      background-attachment: fixed;
+      background-size: cover, 320px 320px;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(6px);
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(230, 81, 0, 0.14);
+      border-top: 5px solid #ef6c00;
+    }
+    h2 { text-align: center; color: #d84315; margin-top: 0; margin-bottom: 4px; }
+    .subtitle { text-align: center; font-size: 12px; color: #795548; margin-bottom: 16px; font-weight: bold; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+    .camera-box { position: relative; width: 100%; background: #111; border-radius: 8px; overflow: hidden; margin-top: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+    video, canvas { width: 100%; display: block; }
+    canvas { display: none; }
+    .cam-status { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+    .btn-cam { background: #34a853; color: #fff; }
+    .btn-retake { background: #fbbc05; color: #000; display: none; }
+    .btn-gps { background: #fff3e0; color: #e65100; border: 1px solid #ef6c00; padding: 6px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; margin-top: 6px; font-weight: bold; }
+    .btn-submit { background: linear-gradient(135deg, #ef6c00, #d84315); color: #fff; }
+    .btn-success { background: #34a853 !important; color: #fff !important; cursor: default; }
+    .btn-reset { background: #5f6368; color: #fff; display: none; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .info-box { background: #fff8e1; border: 1px solid #ffe0b2; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+    .attendance-summary { display: flex; gap: 10px; margin-bottom: 14px; }
+    .att-card { flex: 1; background: #f8f9fa; border: 1px solid #dadce0; border-radius: 8px; padding: 10px; text-align: center; }
+    .att-card.done { background: #e6f4ea; border-color: #34a853; color: #137333; }
+    .att-title { font-size: 11px; text-transform: uppercase; font-weight: bold; color: #5f6368; margin-bottom: 4px; }
+    .att-card.done .att-title { color: #137333; }
+    .att-time { font-size: 14px; font-weight: bold; }
+    .alert { background: #fce8e6; color: #c5221f; padding: 12px; border-radius: 6px; font-size: 13px; display: none; margin-bottom: 12px; font-weight: bold; }
+    .success-banner { background: #e6f4ea; color: #137333; border: 1px solid #34a853; padding: 14px; border-radius: 8px; font-size: 14px; display: none; margin-bottom: 14px; text-align: center; line-height: 1.5; }
+    .maps-link { color: #e65100; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Presensi Siswa PKL</h2>
+  <div class="subtitle">Semangat Berkarya &amp; Berkompetensi di Dunia Industri</div>
+  
+  <div id="alertBox" class="alert"></div>
+  <div id="successBox" class="success-banner"></div>
+
+  <div class="attendance-summary">
+    <div class="att-card" id="cardDatang">
+      <div class="att-title">Presensi Datang</div>
+      <div class="att-time" id="timeDatang">Belum absen</div>
+    </div>
+    <div class="att-card" id="cardPulang">
+      <div class="att-title">Presensi Pulang</div>
+      <div class="att-time" id="timePulang">Belum absen</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div id="timeDisplay"><strong>Waktu:</strong> Memuat...</div>
+    <div id="gpsDisplay"><strong>Lokasi GPS:</strong> Mencari koordinat satelit...</div>
+    <div id="mapsPreview"></div>
+    <button type="button" class="btn-gps" id="refreshGpsBtn">Segarkan Lokasi GPS</button>
+  </div>
+
+  <div class="form-group">
+    <label for="nama">Nama Siswa</label>
+    <input type="text" id="nama" placeholder="Masukkan nama lengkap" required>
+  </div>
+
+  <div class="form-group">
+    <label for="kelas">Kelas</label>
+    <input type="text" id="kelas" placeholder="Contoh: XII TKJ 1" required>
+  </div>
+
+  <div class="form-group">
+    <label for="tempatPkl">Tempat PKL</label>
+    <input type="text" id="tempatPkl" placeholder="Nama Perusahaan / Industri" required>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Jenis Presensi</label>
+    <select id="status">
+      <option value="Kedatangan">Presensi Kedatangan (Masuk)</option>
+      <option value="Kepulangan">Presensi Kepulangan (Pulang)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Foto Diri di Lokasi (Wajib Kamera Langsung)</label>
+    <div class="camera-box">
+      <span class="cam-status" id="camStatus">Kamera Aktif</span>
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+    <button type="button" class="btn btn-cam" id="snapBtn">Ambil Foto Sekarang</button>
+    <button type="button" class="btn btn-retake" id="retakeBtn">Ulangi Foto</button>
+  </div>
+
+  <button type="button" class="btn btn-submit" id="submitBtn">Kirim Presensi</button>
+  <button type="button" class="btn btn-reset" id="resetBtn">Isi Presensi Baru</button>
+</div>
+
+<script>
+  // GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOTqViUXFqe12NEdeuQkQ7GLZlCxWSJDhb23MPwphQZyN7XHxujS3XxkMUFiUVW0oN/exec";
+
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const snapBtn = document.getElementById('snapBtn');
+  const retakeBtn = document.getElementById('retakeBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const alertBox = document.getElementById('alertBox');
+  const successBox = document.getElementById('successBox');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const gpsDisplay = document.getElementById('gpsDisplay');
+  const mapsPreview = document.getElementById('mapsPreview');
+  const refreshGpsBtn = document.getElementById('refreshGpsBtn');
+  const camStatus = document.getElementById('camStatus');
+  const cardDatang = document.getElementById('cardDatang');
+  const timeDatang = document.getElementById('timeDatang');
+  const cardPulang = document.getElementById('cardPulang');
+  const timePulang = document.getElementById('timePulang');
+
+  let currentLat = null;
+  let currentLng = null;
+  let capturedImage = null;
+  let activeStream = null;
+  let watchId = null;
+
+  // Fungsi memantau & menampilkan riwayat presensi hari ini dari penyimpanan perangkat
+  function getTodayKey() {
+    const d = new Date();
+    return `presensi_pkl_${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  }
+
+  function loadDailyAttendance() {
+    const saved = JSON.parse(localStorage.getItem(getTodayKey()) || '{}');
+    if (saved.Kedatangan) {
+      cardDatang.classList.add('done');
+      timeDatang.innerText = `✓ ${saved.Kedatangan}`;
+    } else {
+      cardDatang.classList.remove('done');
+      timeDatang.innerText = "Belum absen";
+    }
+
+    if (saved.Kepulangan) {
+      cardPulang.classList.add('done');
+      timePulang.innerText = `✓ ${saved.Kepulangan}`;
+    } else {
+      cardPulang.classList.remove('done');
+      timePulang.innerText = "Belum absen";
+    }
+  }
+
+  function saveDailyAttendance(jenis, waktu) {
+    const key = getTodayKey();
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    saved[jenis] = waktu;
+    localStorage.setItem(key, JSON.stringify(saved));
+    loadDailyAttendance();
+  }
+
+  // 1. Peringatan anti-galeri (drag/drop)
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    showAlert("PERINGATAN: Unggah file dari galeri dilarang! Foto harus diambil langsung dari kamera perangkat.");
+  });
+
+  function showAlert(msg) {
+    alertBox.innerText = msg;
+    alertBox.style.display = 'block';
+    successBox.style.display = 'none';
+  }
+
+  function hideAlert() {
+    alertBox.style.display = 'none';
+  }
+
+  // 2. Fungsi Menghidupkan & Mematikan Kamera
+  async function startCamera() {
+    try {
+      stopCamera();
+      activeStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "user" }, 
+        audio: false 
+      });
+      video.srcObject = activeStream;
+      camStatus.innerText = "Kamera Aktif";
+      camStatus.style.background = "rgba(52, 168, 83, 0.85)";
+      snapBtn.disabled = false;
+    } catch (err) {
+      camStatus.innerText = "Kamera Mati";
+      showAlert("PERINGATAN: Kamera tidak dapat diakses. Foto wajib diambil langsung dari kamera perangkat, bukan dari galeri foto. Izinkan akses kamera pada browser Anda.");
+      snapBtn.disabled = true;
+    }
+  }
+
+  function stopCamera() {
+    if (activeStream) {
+      activeStream.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+      activeStream = null;
+    }
+    camStatus.innerText = "Kamera Nonaktif (Foto Tersimpan)";
+    camStatus.style.background = "rgba(0, 0, 0, 0.75)";
+  }
+
+  // 3. Pelacakan Lokasi GPS Akurat
+  function initLocation() {
+    if (!navigator.geolocation) {
+      gpsDisplay.innerHTML = "<strong>Lokasi GPS:</strong> Browser tidak mendukung GPS.";
+      return;
+    }
+
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+    }
+
+    gpsDisplay.innerHTML = "<strong>Lokasi GPS:</strong> Mengunci titik koordinat...";
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        currentLat = pos.coords.latitude;
+        currentLng = pos.coords.longitude;
+        const akurasi = Math.round(pos.coords.accuracy);
+        const mapsUrl = "https://www.google.com/maps?q=" + currentLat + "," + currentLng;
+        
+        gpsDisplay.innerHTML = `<strong>Lokasi GPS:</strong> ${currentLat.toFixed(6)}, ${currentLng.toFixed(6)} (Akurasi ±${akurasi}m)`;
+        mapsPreview.innerHTML = `<a href="${mapsUrl}" target="_blank" class="maps-link">📍 Cek Titik Lokasi di Google Maps</a>`;
+        hideAlert();
+      },
+      (err) => {
+        let pesanError = "Gagal mendapatkan lokasi.";
+        if (err.code === 1) pesanError = "Izin lokasi ditolak. Aktifkan izin lokasi/GPS di pengaturan browser Anda.";
+        if (err.code === 2) pesanError = "Sinyal GPS tidak tersedia. Pastikan GPS perangkat menyala.";
+        if (err.code === 3) pesanError = "Waktu pencarian GPS habis. Klik 'Segarkan Lokasi GPS'.";
+        
+        gpsDisplay.innerHTML = `<strong>Lokasi GPS:</strong> <span style="color:#c5221f;">${pesanError}</span>`;
+        showAlert("PERINGATAN GPS: " + pesanError);
+      },
+      { 
+        enableHighAccuracy: true, 
+        timeout: 15000, 
+        maximumAge: 0 
+      }
+    );
+  }
+
+  refreshGpsBtn.addEventListener('click', initLocation);
+
+  // 4. Waktu Real-Time
+  function updateClock() {
+    const now = new Date();
+    const opsiTanggal = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const hariTanggal = now.toLocaleDateString('id-ID', opsiTanggal);
+    const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    timeDisplay.innerHTML = `<strong>Waktu:</strong> ${hariTanggal}, ${jam}`;
+  }
+
+  setInterval(updateClock, 1000);
+  updateClock();
+  loadDailyAttendance();
+  startCamera();
+  initLocation();
+
+  // 5. Jepret Foto & Langsung Matikan Kamera
+  snapBtn.addEventListener('click', () => {
+    if (!video.videoWidth) {
+      showAlert("Kamera belum siap. Tunggu sebentar lalu coba lagi.");
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    capturedImage = canvas.toDataURL('image/jpeg', 0.7);
+    
+    stopCamera();
+
+    video.style.display = 'none';
+    canvas.style.display = 'block';
+    snapBtn.style.display = 'none';
+    retakeBtn.style.display = 'block';
+    hideAlert();
+  });
+
+  // 6. Ulangi Foto & Hidupkan Kembali Kamera
+  retakeBtn.addEventListener('click', () => {
+    capturedImage = null;
+    video.style.display = 'block';
+    canvas.style.display = 'none';
+    snapBtn.style.display = 'block';
+    retakeBtn.style.display = 'none';
+    startCamera();
+  });
+
+  // 7. Kirim Data ke Google Apps Script
+  submitBtn.addEventListener('click', async () => {
+    const namaInput = document.getElementById('nama');
+    const kelasInput = document.getElementById('kelas');
+    const tempatPklInput = document.getElementById('tempatPkl');
+    const statusInput = document.getElementById('status');
+
+    const nama = namaInput.value.trim();
+    const kelas = kelasInput.value.trim();
+    const tempatPkl = tempatPklInput.value.trim();
+    const status = statusInput.value;
+
+    if (!nama || !kelas || !tempatPkl) {
+      showAlert("Harap lengkapi Nama Siswa, Kelas, dan Tempat PKL.");
+      return;
+    }
+    if (!capturedImage) {
+      showAlert("PERINGATAN: Anda belum mengambil foto! Foto harus diambil langsung dari kamera perangkat, bukan dari galeri.");
+      return;
+    }
+    if (!currentLat || !currentLng) {
+      showAlert("Lokasi GPS belum terkunci. Klik tombol 'Segarkan Lokasi GPS' dan pastikan izin lokasi aktif.");
+      return;
+    }
+
+    const now = new Date();
+    const hariTanggal = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const payload = {
+      nama: nama,
+      kelas: kelas,
+      tempatPkl: tempatPkl,
+      status: status,
+      hariTanggal: hariTanggal,
+      jam: jam,
+      lat: currentLat,
+      lng: currentLng,
+      image: capturedImage
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Mengirim data...";
+    hideAlert();
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      // Simpan waktu presensi ke riwayat hari ini & perbarui tampilan kartu atas
+      saveDailyAttendance(status, jam);
+
+      // Tampilkan status "Sudah Terkirim" di banner atas dan tombol
+      successBox.innerHTML = `✅ <strong>Sudah Terkirim!</strong><br>Data presensi <strong>${status}</strong> atas nama <strong>${nama}</strong> (${kelas}) telah berhasil dicatat ke Spreadsheet pada pukul ${jam}.`;
+      successBox.style.display = 'block';
+
+      submitBtn.classList.add('btn-success');
+      submitBtn.innerText = "✓ Sudah Terkirim";
+
+      // Kunci input dan sembunyikan tombol ulangi foto agar tidak terkirim ganda
+      namaInput.disabled = true;
+      kelasInput.disabled = true;
+      tempatPklInput.disabled = true;
+      statusInput.disabled = true;
+      retakeBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      showAlert("Gagal mengirim presensi. Periksa koneksi internet Anda.");
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Kirim Presensi";
+    }
+  });
+
+  // 8. Tombol untuk memuat ulang halaman jika ingin mengisi presensi baru
+  resetBtn.addEventListener('click', () => {
+    location.reload();
+  });
+</script>
+
+</body>
+</html>
